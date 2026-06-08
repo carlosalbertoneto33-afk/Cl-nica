@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEAbot – Meu Companheiro de Aprendizado</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul: #4A90E2;
+    --verde: #5BC99A;
+    --laranja: #FF8C42;
+    --roxo: #9B59B6;
+    --amarelo: #F9D923;
+    --rosa: #F06292;
+    --fundo: #F0F6FF;
+    --branco: #FFFFFF;
+    --texto: #2C3E50;
+    --sombra: 0 8px 32px rgba(74,144,226,0.15);
+    --raio: 24px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--fundo);
+    color: var(--texto);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ───── TELA DE CARREGAMENTO ───── */
+  #splash {
+    position: fixed; inset: 0; z-index: 999;
+    background: linear-gradient(135deg, #4A90E2 0%, #5BC99A 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transition: opacity .6s;
+  }
+  #splash.hide { opacity: 0; pointer-events: none; }
+  .robot-logo {
+    font-size: 90px; animation: bounce 1s infinite alternate;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.2));
+  }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-18px); } }
+  #splash h1 {
+    font-family: 'Baloo 2', cursive; font-size: 2.8rem; color: #fff;
+    margin-top: 16px; text-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  #splash p { color: rgba(255,255,255,0.85); font-size: 1.1rem; margin-top: 8px; }
+  .loading-dots { display: flex; gap: 8px; margin-top: 24px; }
+  .loading-dots span {
+    width: 12px; height: 12px; border-radius: 50%; background: #fff;
+    animation: dotPulse 1.2s infinite;
+  }
+  .loading-dots span:nth-child(2) { animation-delay: .2s; }
+  .loading-dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes dotPulse { 0%,80%,100%{transform:scale(.6);opacity:.4} 40%{transform:scale(1);opacity:1} }
+
+  /* ───── HEADER ───── */
+  header {
+    background: var(--branco);
+    box-shadow: 0 2px 16px rgba(74,144,226,0.10);
+    padding: 12px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-logo { display: flex; align-items: center; gap: 10px; }
+  .header-logo span { font-size: 2rem; }
+  .header-logo h2 {
+    font-family: 'Baloo 2', cursive; font-size: 1.5rem;
+    color: var(--azul); font-weight: 800;
+  }
+  .mood-btn {
+    background: linear-gradient(135deg, var(--amarelo), var(--laranja));
+    border: none; border-radius: 50px; padding: 8px 18px;
+    font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 700;
+    cursor: pointer; color: var(--texto);
+    box-shadow: 0 4px 12px rgba(255,140,66,0.3);
+    transition: transform .2s;
+  }
+  .mood-btn:hover { transform: scale(1.05); }
+
+  /* ───── TABS NAV ───── */
+  .tabs {
+    display: flex; gap: 8px; overflow-x: auto;
+    padding: 16px 20px; background: var(--branco);
+    border-bottom: 2px solid #E8F0FE;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0;
+    background: var(--fundo); border: 2px solid transparent;
+    border-radius: 50px; padding: 10px 20px;
+    font-family: 'Nunito', sans-serif; font-size: .95rem; font-weight: 700;
+    cursor: pointer; transition: all .2s; color: #7f8c8d;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .tab-btn.active {
+    background: var(--azul); color: #fff; border-color: var(--azul);
+    box-shadow: 0 4px 16px rgba(74,144,226,0.35);
+    transform: translateY(-2px);
+  }
+
+  /* ───── CONTEÚDO DAS TELAS ───── */
+  .screen { display: none; padding: 20px; animation: fadeIn .3s; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ───── HOME ───── */
+  .welcome-card {
+    background: linear-gradient(135deg, var(--azul), #7EC8E3);
+    border-radius: var(--raio); padding: 28px 24px;
+    color: #fff; text-align: center; margin-bottom: 24px;
+    position: relative; overflow: hidden;
+  }
+  .welcome-card::before {
+    content: ''; position: absolute; top: -40px; right: -40px;
+    width: 140px; height: 140px; border-radius: 50%;
+    background: rgba(255,255,255,0.10);
+  }
+  .welcome-card .big-robot { font-size: 60px; margin-bottom: 8px; display: block; }
+  .welcome-card h1 {
+    font-family: 'Baloo 2', cursive; font-size: 1.8rem; font-weight: 800;
+  }
+  .welcome-card p { opacity: .9; margin-top: 6px; font-size: 1rem; }
+
+  .section-title {
+    font-family: 'Baloo 2', cursive; font-size: 1.3rem; font-weight: 700;
+    margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+  .card {
+    background: var(--branco); border-radius: var(--raio);
+    padding: 20px 16px; box-shadow: var(--sombra);
+    text-align: center; cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+    border: 2px solid transparent;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(74,144,226,0.20); }
+  .card:active { transform: scale(.97); }
+  .card .icon { font-size: 3rem; display: block; margin-bottom: 8px; }
+  .card h3 { font-size: 1rem; font-weight: 800; color: var(--texto); }
+  .card p { font-size: .82rem; color: #7f8c8d; margin-top: 4px; }
+  .card.azul { border-color: var(--azul); background: #EBF3FD; }
+  .card.verde { border-color: var(--verde); background: #EAF8F2; }
+  .card.laranja { border-color: var(--laranja); background: #FFF3EB; }
+  .card.roxo { border-color: var(--roxo); background: #F3EAF8; }
+  .card.amarelo { border-color: var(--amarelo); background: #FEFBE8; }
+  .card.rosa { border-color: var(--rosa); background: #FDE8F1; }
+
+  /* ───── PICTOGRAMAS ───── */
+  .picto-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    margin-bottom: 20px;
+  }
+  .picto-card {
+    background: var(--branco); border-radius: 20px; padding: 18px 10px;
+    box-shadow: var(--sombra); text-align: center; cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    border: 3px solid transparent;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .picto-card:active { transform: scale(.93); }
+  .picto-card.selected { border-color: var(--azul); background: #EBF3FD; }
+  .picto-card .picto-icon { font-size: 2.8rem; display: block; margin-bottom: 6px; }
+  .picto-card span.label { font-size: .85rem; font-weight: 700; color: var(--texto); }
+
+  .frase-box {
+    background: var(--branco); border-radius: 20px; padding: 18px;
+    box-shadow: var(--sombra); min-height: 70px;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .frase-item {
+    background: var(--azul); color: #fff; border-radius: 50px;
+    padding: 8px 16px; font-weight: 700; font-size: .95rem;
+    display: flex; align-items: center; gap: 6px;
+    animation: pop .2s;
+  }
+  @keyframes pop { from{transform:scale(.7);opacity:0} to{transform:scale(1);opacity:1} }
+  .frase-item button {
+    background: none; border: none; color: #fff;
+    font-size: 1rem; cursor: pointer; padding: 0 2px;
+  }
+  .frase-empty { color: #b0bec5; font-size: .95rem; font-style: italic; }
+
+  .btn-fala {
+    width: 100%; background: linear-gradient(135deg, var(--verde), #3dd4a0);
+    border: none; border-radius: 50px; padding: 16px;
+    font-family: 'Nunito', sans-serif; font-size: 1.1rem; font-weight: 800;
+    color: #fff; cursor: pointer; box-shadow: 0 6px 20px rgba(91,201,154,0.4);
+    transition: transform .15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-fala:active { transform: scale(.97); }
+
+  .categories { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; }
+  .cat-btn {
+    flex-shrink: 0; background: var(--fundo); border: 2px solid #dce8fa;
+    border-radius: 50px; padding: 7px 16px;
+    font-family: 'Nunito', sans-serif; font-size: .85rem; font-weight: 700;
+    cursor: pointer; color: #7f8c8d; transition: all .2s;
+  }
+  .cat-btn.active { background: var(--laranja); color: #fff; border-color: var(--laranja); }
+
+  /* ───── JOGOS ───── */
+  .game-container { background: var(--branco); border-radius: var(--raio); padding: 24px; box-shadow: var(--sombra); margin-bottom: 20px; }
+  .game-title { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 800; margin-bottom: 16px; text-align: center; }
+  .game-score {
+    display: flex; justify-content: space-between; margin-bottom: 16px;
+    background: var(--fundo); border-radius: 16px; padding: 10px 16px;
+  }
+  .score-item { text-align: center; }
+  .score-item .val { font-size: 1.6rem; font-weight: 800; color: var(--azul); font-family: 'Baloo 2', cursive; }
+  .score-item .lbl { font-size: .75rem; color: #7f8c8d; font-weight: 600; }
+
+  /* Jogo de Memória */
+  .memory-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    margin-bottom: 16px;
+  }
+  .mem-card {
+    aspect-ratio: 1; border-radius: 16px;
+    background: linear-gradient(135deg, var(--azul), #6baed4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; cursor: pointer; transition: transform .3s;
+    border: 3px solid transparent; user-select: none;
+    box-shadow: 0 4px 12px rgba(74,144,226,0.2);
+  }
+  .mem-card.flipped { background: var(--branco); border-color: var(--verde); }
+  .mem-card.matched { background: #EAF8F2; border-color: var(--verde); pointer-events: none; }
+  .mem-card.shake { animation: shake .4s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+  /* Jogo de Emoções */
+  .emotion-area { text-align: center; }
+  .emotion-display { font-size: 5rem; margin: 20px 0; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+  .emotion-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .emo-btn {
+    background: var(--fundo); border: 3px solid #dce8fa;
+    border-radius: 16px; padding: 14px; font-size: 1rem; font-weight: 700;
+    cursor: pointer; transition: all .2s; font-family: 'Nunito', sans-serif;
+    color: var(--texto);
+  }
+  .emo-btn:hover { border-color: var(--azul); background: #EBF3FD; }
+  .emo-btn.correct { background: #EAF8F2; border-color: var(--verde); color: var(--verde); }
+  .emo-btn.wrong { background: #FEE; border-color: #e74c3c; color: #e74c3c; }
+
+  /* Sequência de Cores */
+  .seq-colors { display: flex; justify-content: center; gap: 14px; margin: 20px 0; }
+  .seq-circle {
+    width: 70px; height: 70px; border-radius: 50%; cursor: pointer;
+    border: 4px solid transparent; transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  }
+  .seq-circle:active { transform: scale(.9); }
+  .seq-circle.lit { border-color: #fff; transform: scale(1.15); box-shadow: 0 0 24px 8px currentColor; }
+  .seq-display {
+    min-height: 48px; background: var(--fundo); border-radius: 14px;
+    display: flex; gap: 8px; align-items: center; justify-content: center;
+    padding: 10px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .seq-dot { width: 24px; height: 24px; border-radius: 50%; }
+
+  /* ───── ROTINA ───── */
+  .rotina-list { display: flex; flex-direction: column; gap: 12px; }
+  .rotina-item {
+    background: var(--branco); border-radius: 18px; padding: 16px 18px;
+    box-shadow: var(--sombra); display: flex; align-items: center; gap: 14px;
+    border-left: 6px solid var(--azul); transition: opacity .3s;
+  }
+  .rotina-item.done { border-left-color: var(--verde); opacity: .6; }
+  .rotina-item .r-icon { font-size: 2rem; flex-shrink: 0; }
+  .rotina-item .r-info { flex: 1; }
+  .rotina-item .r-info h4 { font-weight: 800; font-size: 1rem; }
+  .rotina-item .r-info p { font-size: .82rem; color: #7f8c8d; margin-top: 2px; }
+  .rotina-item .check-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 3px solid var(--verde); background: transparent;
+    font-size: 1.2rem; cursor: pointer; transition: background .2s, color .2s;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .rotina-item.done .check-btn { background: var(--verde); color: #fff; border-color: var(--verde); }
+  .progress-bar-wrap { background: #E8F0FE; border-radius: 50px; height: 12px; margin-bottom: 20px; overflow: hidden; }
+  .progress-bar { height: 100%; border-radius: 50px; background: linear-gradient(90deg, var(--azul), var(--verde)); transition: width .5s; }
+
+  /* ───── HUMOR ───── */
+  .mood-panel { text-align: center; }
+  .mood-emojis { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin: 24px 0; }
+  .mood-emoji {
+    font-size: 3.5rem; cursor: pointer; transition: transform .2s;
+    border-radius: 50%; padding: 10px;
+    border: 3px solid transparent;
+  }
+  .mood-emoji:hover, .mood-emoji.selected { transform: scale(1.3); border-color: var(--azul); background: #EBF3FD; }
+  .mood-label { font-size: 1.1rem; font-weight: 700; color: var(--azul); min-height: 28px; }
+  .mood-history { background: var(--branco); border-radius: 20px; padding: 18px; box-shadow: var(--sombra); margin-top: 20px; }
+  .mood-history h3 { font-family: 'Baloo 2', cursive; font-size: 1.1rem; margin-bottom: 12px; }
+  .mood-day-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .mood-day-label { font-size: .82rem; color: #7f8c8d; width: 30px; font-weight: 700; }
+
+  /* ───── CONQUISTAS ───── */
+  .conquistas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .conquista-card {
+    background: var(--branco); border-radius: 20px; padding: 18px 14px;
+    box-shadow: var(--sombra); text-align: center;
+    border: 3px solid #eee; transition: border-color .2s;
+  }
+  .conquista-card.unlocked { border-color: var(--amarelo); background: #FFFBEA; }
+  .conquista-card .c-icon { font-size: 2.5rem; display: block; margin-bottom: 8px; }
+  .conquista-card h4 { font-size: .9rem; font-weight: 800; }
+  .conquista-card p { font-size: .78rem; color: #7f8c8d; margin-top: 4px; }
+  .locked-overlay { filter: grayscale(1); opacity: .5; }
+
+  /* ───── MODAL ───── */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; opacity: 0; pointer-events: none; transition: opacity .3s;
+  }
+  .modal-bg.show { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--branco); border-radius: var(--raio); padding: 28px 24px;
+    max-width: 360px; width: 100%; text-align: center;
+    transform: scale(.9); transition: transform .3s;
+  }
+  .modal-bg.show .modal { transform: scale(1); }
+  .modal .big-emoji { font-size: 5rem; display: block; margin-bottom: 12px; }
+  .modal h2 { font-family: 'Baloo 2', cursive; font-size: 1.6rem; color: var(--texto); }
+  .modal p { color: #7f8c8d; margin: 8px 0 20px; }
+  .btn-modal {
+    background: linear-gradient(135deg, var(--azul), #6baed4);
+    color: #fff; border: none; border-radius: 50px; padding: 14px 32px;
+    font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 800;
+    cursor: pointer; box-shadow: 0 6px 18px rgba(74,144,226,.35);
+    transition: transform .15s;
+  }
+  .btn-modal:active { transform: scale(.97); }
+
+  /* ───── TIMER VISUAL ───── */
+  .timer-ring { display: flex; align-items: center; justify-content: center; margin: 16px 0; }
+  svg.ring circle { transition: stroke-dashoffset .5s linear; }
+
+  /* ───── QR PAGE ───── */
+  .qr-page { text-align: center; padding: 30px 20px; }
+  .qr-box {
+    background: var(--branco); border-radius: var(--raio); padding: 28px;
+    box-shadow: var(--sombra); display: inline-block; margin-bottom: 20px;
+  }
+  .qr-box canvas { border-radius: 12px; }
+  .qr-info { max-width: 280px; margin: 0 auto; }
+  .qr-info p { color: #7f8c8d; font-size: .95rem; line-height: 1.6; }
+
+  /* Responsivo */
+  @media(max-width:380px) {
+    .memory-grid { grid-template-columns: repeat(4,1fr); gap:7px; }
+    .picto-grid { grid-template-columns: repeat(3,1fr); gap:10px; }
+  }
+
+  /* Floating star burst */
+  .star-burst {
+    position: fixed; pointer-events: none; z-index: 300;
+    font-size: 2rem; animation: flyUp 1s forwards;
+  }
+  @keyframes flyUp { from{opacity:1;transform:translateY(0) scale(1)} to{opacity:0;transform:translateY(-80px) scale(1.5)} }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="robot-logo">🤖</div>
+  <h1>TEAbot</h1>
+  <p>Seu companheiro de aprendizado</p>
+  <div class="loading-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-logo">
+    <span>🤖</span>
+    <h2>TEAbot</h2>
+  </div>
+  <button class="mood-btn" onclick="showMoodModal()">😊 Como estou</button>
+</header>
+
+<!-- TABS -->
+<nav class="tabs">
+  <button class="tab-btn active" onclick="goTab('home',this)">🏠 Início</button>
+  <button class="tab-btn" onclick="goTab('picto',this)">🗣️ Falar</button>
+  <button class="tab-btn" onclick="goTab('jogos',this)">🎮 Jogos</button>
+  <button class="tab-btn" onclick="goTab('rotina',this)">📅 Rotina</button>
+  <button class="tab-btn" onclick="goTab('conquistas',this)">⭐ Estrelas</button>
+  <button class="tab-btn" onclick="goTab('qr',this)">📱 QR Code</button>
+</nav>
+
+<!-- HOME -->
+<section id="home" class="screen active">
+  <div class="welcome-card">
+    <span class="big-robot">🤖</span>
+    <h1>Olá! Eu sou o TEAbot!</h1>
+    <p>Pronto para aprender juntos hoje? 🌟</p>
+  </div>
+  <div class="section-title">🎯 O que quero fazer?</div>
+  <div class="grid-2">
+    <div class="card azul" onclick="goTab('picto',document.querySelectorAll('.tab-btn')[1])">
+      <span class="icon">🗣️</span><h3>Falar</h3><p>Usar pictogramas</p>
+    </div>
+    <div class="card verde" onclick="goTab('jogos',document.querySelectorAll('.tab-btn')[2])">
+      <span class="icon">🎮</span><h3>Jogar</h3><p>Jogos divertidos</p>
+    </div>
+    <div class="card laranja" onclick="goTab('rotina',document.querySelectorAll('.tab-btn')[3])">
+      <span class="icon">📅</span><h3>Minha Rotina</h3><p>Ver o meu dia</p>
+    </div>
+    <div class="card roxo" onclick="goTab('conquistas',document.querySelectorAll('.tab-btn')[4])">
+      <span class="icon">⭐</span><h3>Conquistas</h3><p>Minhas estrelas</p>
+    </div>
+    <div class="card amarelo" onclick="showMoodModal()">
+      <span class="icon">😊</span><h3>Como Estou</h3><p>Meus sentimentos</p>
+    </div>
+    <div class="card rosa" onclick="playSound('parabens')">
+      <span class="icon">🎵</span><h3>Música</h3><p>Ouvir sons calmos</p>
+    </div>
+  </div>
+  <div class="section-title">📊 Meu progresso hoje</div>
+  <div class="progress-bar-wrap" id="homeProgress">
+    <div class="progress-bar" id="homeProgressBar" style="width:0%"></div>
+  </div>
+</section>
+
+<!-- PICTOGRAMAS -->
+<section id="picto" class="screen">
+  <div class="section-title">🗣️ O que quero dizer?</div>
+  <div class="categories" id="catBtns">
+    <button class="cat-btn active" onclick="filterPicto('todos',this)">Todos</button>
+    <button class="cat-btn" onclick="filterPicto('escola',this)">🏫 Escola</button>
+    <button class="cat-btn" onclick="filterPicto('necessidades',this)">🍎 Necessidades</button>
+    <button class="cat-btn" onclick="filterPicto('sentimentos',this)">❤️ Sentimentos</button>
+    <button class="cat-btn" onclick="filterPicto('atividades',this)">⚽ Atividades</button>
+  </div>
+  <div class="frase-box" id="fraseBox">
+    <span class="frase-empty">Toque nas imagens para montar sua frase...</span>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:16px;">
+    <button class="btn-fala" style="flex:1" onclick="falarFrase()">🔊 Falar!</button>
+    <button onclick="limparFrase()" style="background:#fee;border:2px solid #e74c3c;border-radius:50px;padding:0 18px;font-size:1.2rem;cursor:pointer;">🗑️</button>
+  </div>
+  <div class="picto-grid" id="pictoGrid"></div>
+</section>
+
+<!-- JOGOS -->
+<section id="jogos" class="screen">
+  <div class="section-title">🎮 Escolha um Jogo</div>
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card azul" onclick="showGame('memoria')"><span class="icon">🧠</span><h3>Memória</h3><p>Encontre os pares</p></div>
+    <div class="card verde" onclick="showGame('emocoes')"><span class="icon">😀</span><h3>Emoções</h3><p>Que sentimento é?</p></div>
+    <div class="card laranja" onclick="showGame('cores')"><span class="icon">🌈</span><h3>Sequências</h3><p>Repita as cores</p></div>
+    <div class="card roxo" onclick="showGame('palavras')"><span class="icon">📚</span><h3>Palavras</h3><p>Forme palavras</p></div>
+  </div>
+  <div id="gameArea"></div>
+</section>
+
+<!-- ROTINA -->
+<section id="rotina" class="screen">
+  <div class="section-title">📅 Minha rotina de hoje</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="rotinaBar" style="width:0%"></div></div>
+  <div class="rotina-list" id="rotinaList"></div>
+</section>
+
+<!-- CONQUISTAS -->
+<section id="conquistas" class="screen">
+  <div class="section-title">⭐ Minhas Estrelas</div>
+  <div class="welcome-card" style="background:linear-gradient(135deg,#F9D923,#FF8C42);margin-bottom:20px;">
+    <span style="font-size:2.5rem;display:block">🏆</span>
+    <h1 id="totalStars">0 Estrelas</h1>
+    <p>Continue assim! Você é incrível!</p>
+  </div>
+  <div class="conquistas-grid" id="conquistasGrid"></div>
+</section>
+
+<!-- QR CODE -->
+<section id="qr" class="screen">
+  <div class="qr-page">
+    <div class="section-title" style="justify-content:center;">📱 Acesso por QR Code</div>
+    <div class="qr-box">
+      <canvas id="qrCanvas" width="200" height="200"></canvas>
+    </div>
+    <div class="qr-info">
+      <p>📌 Mostre este QR Code para acessar o TEAbot em qualquer dispositivo!</p>
+      <p style="margin-top:12px;font-weight:700;color:var(--azul)">teabot.app/aluno</p>
+      <button class="btn-fala" style="margin-top:20px" onclick="alert('QR Code salvo!')">💾 Salvar QR Code</button>
+    </div>
+  </div>
+</section>
+
+<!-- MODAL HUMOR -->
+<div class="modal-bg" id="moodModalBg">
+  <div class="modal">
+    <span class="big-emoji" id="moodBigEmoji">😊</span>
+    <h2>Como você está?</h2>
+    <p>Toque no emoji que representa seu sentimento agora</p>
+    <div class="mood-emojis" id="moodPickerEmojis">
+      <span class="mood-emoji" onclick="selectMood('😄','Muito Feliz')">😄</span>
+      <span class="mood-emoji" onclick="selectMood('😊','Feliz')">😊</span>
+      <span class="mood-emoji" onclick="selectMood('😐','Normal')">😐</span>
+      <span class="mood-emoji" onclick="selectMood('😟','Triste')">😟</span>
+      <span class="mood-emoji" onclick="selectMood('😡','Bravo')">😡</span>
+      <span class="mood-emoji" onclick="selectMood('😰','Ansioso')">😰</span>
+      <span class="mood-emoji" onclick="selectMood('😴','Cansado')">😴</span>
+      <span class="mood-emoji" onclick="selectMood('🤔','Confuso')">🤔</span>
+    </div>
+    <div class="mood-label" id="moodLabel"></div>
+    <button class="btn-modal" style="margin-top:16px" onclick="closeMoodModal()">✅ Confirmar</button>
+  </div>
+</div>
+
+<!-- MODAL PARABÉNS -->
+<div class="modal-bg" id="winModalBg">
+  <div class="modal">
+    <span class="big-emoji">🎉</span>
+    <h2 id="winTitle">Parabéns!</h2>
+    <p id="winMsg">Você completou o desafio!</p>
+    <button class="btn-modal" onclick="closeWinModal()">🌟 Ótimo!</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// DADOS GLOBAIS
+// ─────────────────────────────────────────────
+let frase = [];
+let stars = parseInt(localStorage.getItem('tea_stars') || '0');
+let rotinaCheck = JSON.parse(localStorage.getItem('tea_rotina') || '{}');
+let moodHistory = JSON.parse(localStorage.getItem('tea_mood') || '[]');
+let conquistasDesbloq = JSON.parse(localStorage.getItem('tea_conquistas') || '[]');
+let currentMood = '😊';
+
+// ─────────────────────────────────────────────
+// SPLASH
+// ─────────────────────────────────────────────
+setTimeout(() => {
+  document.getElementById('splash').classList.add('hide');
+  updateHomeProgress();
+  renderRotina();
+  renderConquistas();
+  drawQR();
+}, 2000);
+
+// ─────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────
+function goTab(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(id === 'picto') renderPicto('todos');
+}
+
+// ─────────────────────────────────────────────
+// PICTOGRAMAS
+// ─────────────────────────────────────────────
+const pictos = [
+  { icon:'🍎', label:'Quero comer', cat:'necessidades' },
+  { icon:'💧', label:'Quero água', cat:'necessidades' },
+  { icon:'🚽', label:'Banheiro', cat:'necessidades' },
+  { icon:'😴', label:'Quero dormir', cat:'necessidades' },
+  { icon:'🤕', label:'Estou com dor', cat:'sentimentos' },
+  { icon:'❤️', label:'Feliz', cat:'sentimentos' },
+  { icon:'😢', label:'Triste', cat:'sentimentos' },
+  { icon:'😡', label:'Bravo', cat:'sentimentos' },
+  { icon:'😰', label:'Ansioso', cat:'sentimentos' },
+  { icon:'🏫', label:'Escola', cat:'escola' },
+  { icon:'📚', label:'Estudar', cat:'escola' },
+  { icon:'✏️', label:'Escrever', cat:'escola' },
+  { icon:'🎨', label:'Desenhar', cat:'escola' },
+  { icon:'👩‍🏫', label:'Professor', cat:'escola' },
+  { icon:'⚽', label:'Futebol', cat:'atividades' },
+  { icon:'🎮', label:'Videogame', cat:'atividades' },
+  { icon:'🎵', label:'Música', cat:'atividades' },
+  { icon:'📱', label:'Celular', cat:'atividades' },
+  { icon:'🏠', label:'Ir pra casa', cat:'atividades' },
+  { icon:'🚶', label:'Caminhar', cat:'atividades' },
+  { icon:'🤝', label:'Ajuda', cat:'escola' },
+  { icon:'🔇', label:'Silêncio', cat:'necessidades' },
+  { icon:'🕐', label:'Esperar', cat:'escola' },
+  { icon:'✅', label:'Terminou', cat:'escola' },
+];
+
+function renderPicto(cat) {
+  const g = document.getElementById('pictoGrid');
+  const filtered = cat === 'todos' ? pictos : pictos.filter(p => p.cat === cat);
+  g.innerHTML = filtered.map((p,i) => `
+    <div class="picto-card" onclick="addPicto('${p.label}','${p.icon}',this)">
+      <span class="picto-icon">${p.icon}</span>
+      <span class="label">${p.label}</span>
+    </div>`).join('');
+}
+
+function filterPicto(cat, btn) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPicto(cat);
+}
+
+function addPicto(label, icon, el) {
+  frase.push({ label, icon });
+  el.classList.add('selected');
+  setTimeout(() => el.classList.remove('selected'), 400);
+  renderFrase();
+  burst(el);
+}
+
+function renderFrase() {
+  const box = document.getElementById('fraseBox');
+  if (!frase.length) {
+    box.innerHTML = '<span class="frase-empty">Toque nas imagens para montar sua frase...</span>';
+    return;
+  }
+  box.innerHTML = frase.map((f,i) => `
+    <div class="frase-item">
+      ${f.icon} ${f.label}
+      <button onclick="removePicto(${i})">×</button>
+    </div>`).join('');
+}
+
+function removePicto(i) { frase.splice(i,1); renderFrase(); }
+function limparFrase() { frase = []; renderFrase(); }
+
+function falarFrase() {
+  if (!frase.length) return;
+  const texto = frase.map(f => f.label).join(', ');
+  if ('speechSynthesis' in window) {
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'pt-BR'; u.rate = 0.85; u.pitch = 1.1;
+    speechSynthesis.speak(u);
+  }
+  addStars(2);
+  burst(document.querySelector('.btn-fala'));
+}
+
+// ─────────────────────────────────────────────
+// JOGOS
+// ─────────────────────────────────────────────
+let memCards = [], memFlipped = [], memMatched = 0, memLock = false;
+let emoScore = 0, emoQtd = 0, emoEmojis;
+let seqSequence = [], seqPlayerSeq = [], seqLevel = 1;
+
+function showGame(tipo) {
+  const area = document.getElementById('gameArea');
+  if (tipo === 'memoria') renderMemoria(area);
+  else if (tipo === 'emocoes') renderEmocoes(area);
+  else if (tipo === 'cores') renderCores(area);
+  else if (tipo === 'palavras') renderPalavras(area);
+  area.scrollIntoView({ behavior: 'smooth' });
+}
+
+// --- MEMÓRIA ---
+const memPairs = ['🐶','🐱','🐸','🦁','🐙','🦋','🌸','🍕'];
+function renderMemoria(area) {
+  memFlipped = []; memMatched = 0; memLock = false;
+  const items = [...memPairs, ...memPairs].sort(() => Math.random() - .5);
+  memCards = items;
+  area.innerHTML = `
+    <div class="game-container">
+      <div class="game-title">🧠 Jogo da Memória</div>
+      <div class="game-score">
+        <div class="score-item"><div class="val" id="memPares">0</div><div class="lbl">Pares</div></div>
+        <div class="score-item"><div class="val" id="memTentativas">0</div><div class="lbl">Tentativas</div></div>
+      </div>
+      <div class="memory-grid">
+        ${items.map((e,i) => `<div class="mem-card" id="mc${i}" onclick="flipCard(${i})">❓</div>`).join('')}
+      </div>
+    </div>`;
+}
+
+let memTentativas = 0;
+function flipCard(i) {
+  if (memLock) return;
+  const card = document.getElementById('mc'+i);
+  if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+  card.classList.add('flipped');
+  card.textContent = memCards[i];
+  memFlipped.push(i);
+  if (memFlipped.length === 2) {
+    memLock = true; memTentativas++;
+    document.getElementById('memTentativas').textContent = memTentativas;
+    const [a, b] = memFlipped;
+    if (memCards[a] === memCards[b]) {
+      document.getElementById('mc'+a).classList.add('matched');
+      document.getElementById('mc'+b).classList.add('matched');
+      memMatched++;
+      document.getElementById('memPares').textContent = memMatched;
+      memFlipped = []; memLock = false;
+      burst(document.getElementById('mc'+b));
+      if (memMatched === memPairs.length) {
+        addStars(10);
+        setTimeout(() => showWin('🧠 Memória!', 'Você encontrou todos os pares! +10 estrelas!'), 300);
+      }
+    } else {
+      setTimeout(() => {
+        document.getElementById('mc'+a).classList.remove('flipped');
+        document.getElementById('mc'+b).classList.remove('flipped');
+        document.getElementById('mc'+a).textContent = '❓';
+        document.getElementById('mc'+b).textContent = '❓';
+        document.getElementById('mc'+a).classList.add('shake');
+        document.getElementById('mc'+b).classList.add('shake');
+        setTimeout(() => {
+          document.getElementById('mc'+a)?.classList.remove('shake');
+          document.getElementById('mc'+b)?.classList.remove('shake');
+        }, 400);
+        memFlipped = []; memLock = false;
+      }, 900);
+    }
+  }
+}
+
+// --- EMOÇÕES ---
+const emoData = [
+  { emoji:'😄', name:'Muito Feliz', opts:['Muito Feliz','Triste','Com Medo','Surpreso'] },
+  { emoji:'😢', name:'Triste', opts:['Feliz','Triste','Bravo','Entediado'] },
+  { emoji:'😡', name:'Bravo', opts:['Feliz','Assustado','Bravo','Cansado'] },
+  { emoji:'😰', name:'Assustado', opts:['Bravo','Assustado','Surpreso','Entediado'] },
+  { emoji:'😴', name:'Cansado', opts:['Triste','Feliz','Cansado','Bravo'] },
+  { emoji:'😲', name:'Surpreso', opts:['Surpreso','Bravo','Triste','Feliz'] },
+  { emoji:'🤔', name:'Confuso', opts:['Feliz','Confuso','Bravo','Cansado'] },
+];
+function renderEmocoes(area) {
+  emoScore = 0; emoQtd = 0;
+  area.innerHTML = `<div class="game-container" id="emoContainer">
+    <div class="game-title">😀 Adivinha a Emoção!</div>
+    <div class="game-score">
+      <div class="score-item"><div class="val" id="emoAcertos">0</div><div class="lbl">Acertos</div></div>
+      <div class="score-item"><div class="val" id="emoRodadas">0</div><div class="lbl">Rodadas</div></div>
+    </div>
+    <div id="emoInner"></div>
+  </div>`;
+  nextEmo();
+}
+function nextEmo() {
+  const data = emoData[Math.floor(Math.random() * emoData.length)];
+  const opts = [...data.opts].sort(() => Math.random() - .5);
+  document.getElementById('emoInner').innerHTML = `
+    <div class="emotion-area">
+      <div class="emotion-display">${data.emoji}</div>
+      <p style="margin-bottom:14px;font-weight:700;">Como este personagem está se sentindo?</p>
+      <div class="emotion-opts">
+        ${opts.map(o => `<button class="emo-btn" onclick="checkEmo('${o}','${data.name}',this)">${o}</button>`).join('')}
+      </div>
+    </div>`;
+}
+function checkEmo(escolha, correta, btn) {
+  emoQtd++;
+  document.getElementById('emoRodadas').textContent = emoQtd;
+  document.querySelectorAll('.emo-btn').forEach(b => b.disabled = true);
+  if (escolha === correta) {
+    btn.classList.add('correct'); btn.textContent = '✅ ' + correta;
+    emoScore++; document.getElementById('emoAcertos').textContent = emoScore;
+    addStars(3); burst(btn);
+    setTimeout(nextEmo, 1200);
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.emo-btn').forEach(b => {
+      if (b.textContent === correta) b.classList.add('correct');
+    });
+    setTimeout(nextEmo, 1500);
+  }
+}
+
+// --- SEQUÊNCIA DE CORES ---
+const seqColores = [
+  { color:'#4A90E2', name:'Azul' },
+  { color:'#5BC99A', name:'Verde' },
+  { color:'#FF8C42', name:'Laranja' },
+  { color:'#F9D923', name:'Amarelo' },
+];
+function renderCores(area) {
+  seqSequence = []; seqPlayerSeq = []; seqLevel = 1;
+  area.innerHTML = `<div class="game-container">
+    <div class="game-title">🌈 Sequência de Cores</div>
+    <div class="game-score">
+      <div class="score-item"><div class="val" id="seqNivel">1</div><div class="lbl">Nível</div></div>
+      <div class="score-item"><div class="val" id="seqRec">0</div><div class="lbl">Recorde</div></div>
+    </div>
+    <div class="seq-display" id="seqDisplay"><span style="color:#b0bec5;font-size:.9rem">Veja a sequência e repita!</span></div>
+    <div class="seq-colors" id="seqCircles">
+      ${seqColores.map((c,i) => `<div class="seq-circle" id="sc${i}" style="background:${c.color}" onclick="seqClick(${i})"></div>`).join('')}
+    </div>
+    <button class="btn-fala" onclick="seqStart()">▶️ Começar!</button>
+  </div>`;
+}
+function seqStart() {
+  seqSequence.push(Math.floor(Math.random() * 4));
+  seqPlayerSeq = [];
+  playSeqSequence();
+}
+function playSeqSequence() {
+  let i = 0;
+  document.querySelectorAll('.seq-circle').forEach(c => c.style.pointerEvents='none');
+  const interval = setInterval(() => {
+    if (i >= seqSequence.length) {
+      clearInterval(interval);
+      document.querySelectorAll('.seq-circle').forEach(c => c.style.pointerEvents='auto');
+      renderSeqDisplay();
+      return;
+    }
+    const idx = seqSequence[i];
+    const el = document.getElementById('sc'+idx);
+    el.classList.add('lit');
+    setTimeout(() => el.classList.remove('lit'), 500);
+    i++;
+  }, 700);
+}
+function renderSeqDisplay() {
+  const d = document.getElementById('seqDisplay');
+  d.innerHTML = seqSequence.map(i => `<div class="seq-dot" style="background:${seqColores[i].color}"></div>`).join('');
+}
+function seqClick(i) {
+  seqPlayerSeq.push(i);
+  const el = document.getElementById('sc'+i);
+  el.classList.add('lit'); setTimeout(() => el.classList.remove('lit'), 300);
+  const pos = seqPlayerSeq.length - 1;
+  if (seqPlayerSeq[pos] !== seqSequence[pos]) {
+    burst(el);
+    showWin('Quase lá! 😅', `Você chegou ao nível ${seqLevel}! Tente de novo!`);
+    const rec = parseInt(localStorage.getItem('seq_rec')||'0');
+    if (seqLevel > rec) localStorage.setItem('seq_rec', seqLevel);
+    seqLevel = 1;
+    document.getElementById('seqNivel').textContent = 1;
+    document.getElementById('seqRec').textContent = localStorage.getItem('seq_rec')||0;
+    seqSequence = []; seqPlayerSeq = [];
+    return;
+  }
+  if (seqPlayerSeq.length === seqSequence.length) {
+    seqLevel++; addStars(2);
+    document.getElementById('seqNivel').textContent = seqLevel;
+    setTimeout(seqStart, 600);
+  }
+}
+
+// --- PALAVRAS ---
+const palavrasData = [
+  { word:'ESCOLA', hint:'🏫', letters:['E','S','C','O','L','A'] },
+  { word:'AMIGO', hint:'👫', letters:['A','M','I','G','O'] },
+  { word:'FELIZ', hint:'😄', letters:['F','E','L','I','Z'] },
+  { word:'LIVRO', hint:'📚', letters:['L','I','V','R','O'] },
+];
+let palAtual = 0, palMontada = [];
+function renderPalavras(area) {
+  palAtual = Math.floor(Math.random() * palavrasData.length);
+  palMontada = [];
+  const p = palavrasData[palAtual];
+  const misturadas = [...p.letters].sort(() => Math.random() - .5);
+  area.innerHTML = `<div class="game-container">
+    <div class="game-title">📚 Monte a Palavra</div>
+    <div style="text-align:center;margin-bottom:10px;font-size:4rem">${p.hint}</div>
+    <div id="palMontada" style="display:flex;justify-content:center;gap:8px;min-height:50px;margin-bottom:14px;flex-wrap:wrap">
+      ${Array(p.letters.length).fill('<div style="width:40px;height:40px;border:3px dashed #dce8fa;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800">_</div>').join('')}
+    </div>
+    <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      ${misturadas.map((l,i) => `<button onclick="addLetter('${l}',${i})" id="pl${i}" style="width:44px;height:44px;background:var(--azul);color:#fff;border:none;border-radius:12px;font-size:1.3rem;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif">${l}</button>`).join('')}
+    </div>
+    <button onclick="limparPalavra()" style="background:#fee;border:2px solid #e74c3c;border-radius:50px;padding:10px 24px;font-family:Nunito,sans-serif;font-weight:700;cursor:pointer;color:#e74c3c;width:100%;font-size:.95rem">🔄 Recomeçar</button>
+  </div>`;
+}
+function addLetter(l, btnIdx) {
+  const p = palavrasData[palAtual];
+  palMontada.push(l);
+  document.getElementById('pl'+btnIdx).style.opacity = '0.3';
+  document.getElementById('pl'+btnIdx).disabled = true;
+  updatePalDisplay();
+  if (palMontada.length === p.letters.length) {
+    if (palMontada.join('') === p.word) {
+      addStars(5); burst(document.getElementById('gameArea'));
+      setTimeout(() => showWin('📚 Palavra Correta! +5⭐', `Você formou "${p.word}"! Incrível!`), 300);
+    } else {
+      setTimeout(() => { alert('❌ Não está certo. Tente outra vez!'); limparPalavra(); }, 300);
+    }
+  }
+}
+function updatePalDisplay() {
+  const p = palavrasData[palAtual];
+  const slots = [];
+  for (let i = 0; i < p.letters.length; i++) {
+    const l = palMontada[i] || '_';
+    slots.push(`<div style="width:40px;height:40px;border:3px solid ${l!=='_'?'var(--verde)':'#dce8fa'};border-radius:10px;background:${l!=='_'?'#EAF8F2':'#fff'};display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800">${l}</div>`);
+  }
+  document.getElementById('palMontada').innerHTML = slots.join('');
+}
+function limparPalavra() { renderPalavras(document.getElementById('gameArea')); }
+
+// ─────────────────────────────────────────────
+// ROTINA
+// ─────────────────────────────────────────────
+const rotinaData = [
+  { id:'r1', icon:'⏰', hora:'07:00', title:'Acordar', desc:'Hora de levantar! Bom dia!' },
+  { id:'r2', icon:'🪥', hora:'07:15', title:'Escovar os dentes', desc:'Deixe os dentes brilhando!' },
+  { id:'r3', icon:'🚿', hora:'07:30', title:'Tomar banho', desc:'Fique limpo e cheiroso!' },
+  { id:'r4', icon:'👕', hora:'07:50', title:'Se vestir', desc:'Coloque a roupa da escola.' },
+  { id:'r5', icon:'🍽️', hora:'08:00', title:'Café da manhã', desc:'Comer bem dá energia!' },
+  { id:'r6', icon:'🎒', hora:'08:20', title:'Pegar a mochila', desc:'Não esqueça o material!' },
+  { id:'r7', icon:'🏫', hora:'08:30', title:'Ir para a escola', desc:'Vamos aprender coisas novas!' },
+  { id:'r8', icon:'📚', hora:'14:00', title:'Hora de estudar', desc:'Revisão das atividades do dia.' },
+  { id:'r9', icon:'🎮', hora:'16:00', title:'Tempo livre', desc:'Jogar e relaxar!' },
+  { id:'r10', icon:'🌙', hora:'21:00', title:'Hora de dormir', desc:'Descanso é muito importante!' },
+];
+
+function renderRotina() {
+  const list = document.getElementById('rotinaList');
+  list.innerHTML = rotinaData.map(r => {
+    const done = !!rotinaCheck[r.id];
+    return `<div class="rotina-item ${done?'done':''}" id="${r.id}">
+      <span class="r-icon">${r.icon}</span>
+      <div class="r-info">
+        <h4>${r.hora} – ${r.title}</h4>
+        <p>${r.desc}</p>
+      </div>
+      <button class="check-btn" onclick="toggleRotina('${r.id}',this)">${done?'✅':''}</button>
+    </div>`;
+  }).join('');
+  updateRotinaBar();
+}
+
+function toggleRotina(id, btn) {
+  rotinaCheck[id] = !rotinaCheck[id];
+  localStorage.setItem('tea_rotina', JSON.stringify(rotinaCheck));
+  const item = document.getElementById(id);
+  item.classList.toggle('done', rotinaCheck[id]);
+  btn.textContent = rotinaCheck[id] ? '✅' : '';
+  if (rotinaCheck[id]) { addStars(1); burst(btn); }
+  updateRotinaBar();
+  updateHomeProgress();
+}
+
+function updateRotinaBar() {
+  const done = Object.values(rotinaCheck).filter(Boolean).length;
+  const pct = Math.round((done / rotinaData.length) * 100);
+  document.getElementById('rotinaBar').style.width = pct + '%';
+}
+
+// ─────────────────────────────────────────────
+// CONQUISTAS
+// ─────────────────────────────────────────────
+const conquistasData = [
+  { id:'c1', icon:'🌟', title:'Primeira Estrela', desc:'Ganhe sua 1ª estrela', req:1 },
+  { id:'c2', icon:'🗣️', title:'Voz Ativa', desc:'Use os pictogramas 3x', req:null, tipo:'falar' },
+  { id:'c3', icon:'🧠', title:'Mestre da Memória', desc:'Complete o jogo da memória', req:null, tipo:'memoria' },
+  { id:'c4', icon:'😊', title:'Conhecendo Emoções', desc:'Acerte 5 emoções', req:null, tipo:'emocao' },
+  { id:'c5', icon:'✅', title:'Rotina Completa', desc:'Complete toda a rotina', req:null, tipo:'rotina' },
+  { id:'c6', icon:'⭐', title:'Super Estrela', desc:'Acumule 50 estrelas', req:50 },
+  { id:'c7', icon:'🏆', title:'Campeão', desc:'Acumule 100 estrelas', req:100 },
+  { id:'c8', icon:'🎯', title:'Dedicado', desc:'Acesse por 3 dias seguidos', req:null, tipo:'dias' },
+];
+
+function renderConquistas() {
+  checkConquistas();
+  const grid = document.getElementById('conquistasGrid');
+  grid.innerHTML = conquistasData.map(c => {
+    const ok = conquistasDesbloq.includes(c.id);
+    return `<div class="conquista-card ${ok?'unlocked':''}">
+      <span class="c-icon ${ok?'':'locked-overlay'}">${c.icon}</span>
+      <h4>${c.title}</h4>
+      <p>${c.desc}</p>
+      ${ok ? '<span style="color:var(--verde);font-weight:800;font-size:.8rem">✅ Desbloqueada!</span>' : '<span style="color:#b0bec5;font-size:.8rem">🔒 Bloqueada</span>'}
+    </div>`;
+  }).join('');
+  document.getElementById('totalStars').textContent = stars + ' Estrelas';
+}
+
+function checkConquistas() {
+  conquistasData.forEach(c => {
+    if (conquistasDesbloq.includes(c.id)) return;
+    let ok = false;
+    if (c.req && stars >= c.req) ok = true;
+    if (ok) {
+      conquistasDesbloq.push(c.id);
+      localStorage.setItem('tea_conquistas', JSON.stringify(conquistasDesbloq));
+      setTimeout(() => showWin('🏆 Conquista Desbloqueada!', `"${c.title}" – ${c.desc}`), 500);
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
+// ESTRELAS
+// ─────────────────────────────────────────────
+function addStars(n) {
+  stars += n;
+  localStorage.setItem('tea_stars', stars);
+  renderConquistas();
+  updateHomeProgress();
+}
+
+function updateHomeProgress() {
+  const pct = Math.min(stars, 100);
+  document.getElementById('homeProgressBar').style.width = pct + '%';
+}
+
+// ─────────────────────────────────────────────
+// MODAL HUMOR
+// ─────────────────────────────────────────────
+function showMoodModal() { document.getElementById('moodModalBg').classList.add('show'); }
+function closeMoodModal() {
+  document.getElementById('moodModalBg').classList.remove('show');
+  if (moodHistory.length === 0 || moodHistory[moodHistory.length-1] !== currentMood) {
+    moodHistory.push(currentMood);
+    if (moodHistory.length > 7) moodHistory.shift();
+    localStorage.setItem('tea_mood', JSON.stringify(moodHistory));
+  }
+  addStars(1);
+}
+function selectMood(emoji, label) {
+  currentMood = emoji;
+  document.getElementById('moodBigEmoji').textContent = emoji;
+  document.getElementById('moodLabel').textContent = label;
+  document.querySelectorAll('.mood-emoji').forEach(e => e.classList.remove('selected'));
+  event.target.classList.add('selected');
+}
+
+// ─────────────────────────────────────────────
+// MODAL WIN
+// ─────────────────────────────────────────────
+function showWin(title, msg) {
+  document.getElementById('winTitle').textContent = title;
+  document.getElementById('winMsg').textContent = msg;
+  document.getElementById('winModalBg').classList.add('show');
+}
+function closeWinModal() { document.getElementById('winModalBg').classList.remove('show'); }
+
+// ─────────────────────────────────────────────
+// EFEITO BURST
+// ─────────────────────────────────────────────
+function burst(el) {
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  const star = document.createElement('div');
+  star.className = 'star-burst';
+  star.textContent = ['⭐','✨','🌟','💫'][Math.floor(Math.random()*4)];
+  star.style.left = (r.left + r.width/2 - 16) + 'px';
+  star.style.top = (r.top + window.scrollY - 20) + 'px';
+  document.body.appendChild(star);
+  setTimeout(() => star.remove(), 1000);
+}
+
+// ─────────────────────────────────────────────
+// QR CODE (draw on canvas - simple visual)
+// ─────────────────────────────────────────────
+function drawQR() {
+  const canvas = document.getElementById('qrCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const size = 200;
+  // Fundo branco
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, size, size);
+  // Grid aleatório de módulos QR (visual decorativo)
+  const moduleSize = 8;
+  const modules = size / moduleSize;
+  // Cantos posicionais
+  function drawPositional(x, y) {
+    ctx.fillStyle = '#2C3E50';
+    ctx.fillRect(x, y, 7*moduleSize, 7*moduleSize);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x+moduleSize, y+moduleSize, 5*moduleSize, 5*moduleSize);
+    ctx.fillStyle = '#2C3E50';
+    ctx.fillRect(x+2*moduleSize, y+2*moduleSize, 3*moduleSize, 3*moduleSize);
+  }
+  drawPositional(0, 0);
+  drawPositional(size - 7*moduleSize, 0);
+  drawPositional(0, size - 7*moduleSize);
+  // Módulos aleatórios no centro
+  ctx.fillStyle = '#2C3E50';
+  for (let row = 0; row < modules; row++) {
+    for (let col = 0; col < modules; col++) {
+      const inCorner = (row<8&&col<8)||(row<8&&col>modules-9)||(row>modules-9&&col<8);
+      if (!inCorner && Math.random() > 0.55) {
+        ctx.fillRect(col*moduleSize, row*moduleSize, moduleSize-1, moduleSize-1);
+      }
+    }
+  }
+  // Logo no centro
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.beginPath();
+  ctx.arc(size/2, size/2, 22, 0, Math.PI*2);
+  ctx.fill();
+  ctx.font = '28px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🤖', size/2, size/2);
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+window.addEventListener('load', () => {
+  document.getElementById('seqRec') && (document.getElementById('seqRec').textContent = localStorage.getItem('seq_rec')||0);
+});
+</script>
+</body>
+</html>
